@@ -30,8 +30,8 @@ function _sendMessage(contents) {
 function _defaultValues(payload) {
   if (!payload.host)  { payload.host = hostname; }
   if (!payload.time)  { payload.time = new Date().getTime()/1000; }
-  if (payload.metric != null) {
-    payload["metric_f"] = payload.metric;
+  if (typeof payload.metric !== "undefined" && payload.metric !== null) {
+    payload.metric_f = payload.metric;
     delete payload.metric;
   }
   return payload;
@@ -47,7 +47,7 @@ function Client(options, onConnect) {
   if (!options) { options = {}; }
   options.host = options.host ? options.host : '127.0.0.1';
   options.port = options.port ? Number(options.port) : 5555;
-  options.transport = options.transport ? options.transport : 'udp'
+  options.transport = options.transport ? options.transport : 'udp';
 
 
   if (onConnect) { this.once('connect', onConnect); }
@@ -112,7 +112,7 @@ Client.prototype.State = function(state) {
   Query protocol buffer values. */
 Client.prototype.Query = function(query) {
   if (this.transport !== 'tcp'){
-    throw new Exception("Cannot query riemann using UDP, you must use TCP")
+    throw new Exception("Cannot query riemann using UDP, you must use TCP");
   }
   return _sendMessage.call(this, { query: query });
 };
@@ -129,6 +129,6 @@ Client.prototype.send = function(payload) {
 Client.prototype.disconnect = function(onDisconnect) {
   if (this.transport === 'tcp') {
     if (onDisconnect) { this.tcp.socket.once('end', onDisconnect); }
-    this.tcp.socket.end()
+    this.tcp.socket.end();
   }
 };

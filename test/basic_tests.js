@@ -17,7 +17,7 @@ test("should connect to server with TCP", function(done) {
 test("should connect to server with UDP", function(done) {
   udpClient = riemann.createClient({transport:'udp'});
   assert(udpClient instanceof EventEmitter);
-  done()
+  done();
 });
 
 var server_down;
@@ -109,8 +109,9 @@ test("should throw an exception when trying to query via udp", function(done){
     function(){
       udpClient.send(udpClient.Query({
         string: "true"
-      }))}
-  )
+      }));
+    }
+  );
   done();
 
 });
