@@ -17,15 +17,17 @@ first things first, we'll want to establish a new client:
 ```js
 var client = require('riemannjs').createClient({
   host: 'some.riemann.server',
-  port: 5555
+  port: 5555,
+  transport: 'udp' //This is the default, you could set it to 'tcp'
 });
 
+// If we used TCP for the trasnport we could listen for this
 client.on('connect', function() {
   console.log('connected!');
 });
 ```
 
-Just like [Riemann ruby client](https://github.com/aphyr/riemann-ruby-client), the client sends small events over UDP, by default. TCP is used for queries, and large events. There is no acknowledgement of UDP packets, but they are roughly an order of magnitude faster than TCP. We assume both TCP and UDP are listening to the same port.
+Just like [Riemann ruby client](https://github.com/aphyr/riemann-ruby-client), the client sends small events over UDP, by default. TCP is needed for queries, and large events (where large is determined by many factors like network MTU). There is no acknowledgement of UDP packets, but they are roughly an order of magnitude faster than TCP.
 
 sending events is easy (see [list of valid event properties](https://aphyr.github.io/riemann/concepts.html)):
 
@@ -37,9 +39,16 @@ client.send(client.Event({
 }));
 ```
 
-If you wanted to send that message over TCP and receive an acknowledgement, you can specify the transport, explicitly:
+If you wanted to send that message over TCP and receive an acknowledgement, you can specify the protocol during connection, explicitly:
 
 ```js
+
+var client = require('riemannjs').createClient({
+  host: 'some.riemann.server',
+  port: 5555,
+  transport: 'tcp'
+})
+
 client.on('data', function(ack) {
   console.log('got it!');
 });
@@ -48,10 +57,10 @@ client.send(client.Event({
   service: 'buffet_plates',
   metric:  252.2,
   tags:    ['nonblocking']
-}), client.tcp);
+}));
 ```
 
-When you're done monitoring, disconnect:
+When you're done monitoring/querying, disconnect if you are using TCP:
 
 ```js
 client.on('disconnect', function(){

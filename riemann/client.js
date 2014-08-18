@@ -10,32 +10,17 @@ var Serializer = require('./serializer');
 
 /* riemann communicates over UDP and TCP.
    UDP is way faster for sending events,
-   we favor that whenever possible. */
+   so that whenever possible. You need to
+   use TCP for sending queries though */
 var Socket = require('./socket');
 
 
-var MAX_UDP_BUFFER_SIZE = 16384;
-function _sendMessage(contents, transport) {
+function _sendMessage(contents) {
   var self = this;
   return function() {
     // all events are wrapped in the Message type.
     var message = Serializer.serializeMessage(contents);
-
-    // if an explict transport is specified via code,
-    // at definition of this message, we trust it.
-    if (transport) {
-      transport.send(message);
-
-    // if we're sending a message that is larger than the max buffer
-    // size of UDP, we should switch over to TCP.
-    } else if (message.length >= MAX_UDP_BUFFER_SIZE) {
-      self.tcp.send(message);
-
-    // utilize whatever transport this message is applied to,
-    // by caller.
-    } else {
       this.send(message);
-    }
   };
 }
 
@@ -62,36 +47,41 @@ function Client(options, onConnect) {
   if (!options) { options = {}; }
   options.host = options.host ? options.host : '127.0.0.1';
   options.port = options.port ? Number(options.port) : 5555;
+  options.transport = options.transport ? options.transport : 'udp'
+
 
   if (onConnect) { this.once('connect', onConnect); }
 
   var self = this;
 
-  this.tcp = new Socket.tcpSocket(options);
-  this.udp = new Socket.udpSocket(options);
+  if(options.transport === 'udp') {
 
-  // monitor both close events, and proxy
-  // it as a single disconnect event.
-  var _closeAcks = 0;
-  var monitorClose = function() {
-    ++_closeAcks;
-    return function() {
-      if (--_closeAcks === 0) { self.emit('disconnect'); }
-    };
-  };
-  this.tcp.socket.on('close', monitorClose());
-  this.udp.socket.on('close', monitorClose());
+    this.transport = 'udp';
+    this.udp = new Socket.udpSocket(options);
 
-  // proxy the TCP connect event.
-  this.tcp.socket.on('connect', function() { self.emit('connect'); });
+    // proxy errors from UDP
+    this.udp.socket.on('error', function(error) { self.emit('error', error); });
 
-  // proxy errors from TCP and UDP
-  this.tcp.socket.on('error', function(error) { self.emit('error', error); });
-  this.udp.socket.on('error', function(error) { self.emit('error', error); });
+  } else if(options.transport === 'tcp') {
 
-  this.tcp.onMessage(function(message) {
-    self.emit('data', Serializer.deserializeMessage(message));
-  });
+    this.transport = 'tcp';
+    this.tcp = new Socket.tcpSocket(options);
+
+    // proxy the TCP connect event.
+    this.tcp.socket.on('connect', function() { self.emit('connect'); });
+
+    // proxy errors from TCP
+    this.tcp.socket.on('error', function(error) { self.emit('error', error); });
+
+    // proxy data from TCP via deserialize
+    this.tcp.onMessage(function(message) {
+      self.emit('data', Serializer.deserializeMessage(message));
+    });
+
+  } else {
+    //Unrecognised transport
+    throw new Error("unrecognised transport - was expecting 'tcp' or 'udp'");
+  }
 
 }
 
@@ -121,26 +111,24 @@ Client.prototype.State = function(state) {
   takes a key/value object of valid
   Query protocol buffer values. */
 Client.prototype.Query = function(query) {
-  return _sendMessage.call(this, { query: query }, this.tcp);
-};
-
-
-/* sends a payload to Riemann. Exepects any valid payload type
-   (eg: Event, State, Query...) and an optional (requested, not guaranteed)
-   transport (TCP or UDP). */
-Client.prototype.send = function(payload, transport) {
-  if (transport) {
-    assert(transport === this.tcp || transport === this.udp, 'invalid transport provided.');
-  } else {
-    transport = this.udp;
+  if (this.transport !== 'tcp'){
+    throw new Exception("Cannot query riemann using UDP, you must use TCP")
   }
-  payload.apply(transport);
+  return _sendMessage.call(this, { query: query });
 };
 
 
-/* disconnects our client */
+/* sends a payload to Riemann. expects any valid payload type
+   (eg: Event, State, Query...) */
+Client.prototype.send = function(payload) {
+  payload.apply(this[this.transport]);
+};
+
+
+/* disconnects our client (noop if using UDP) */
 Client.prototype.disconnect = function(onDisconnect) {
-  if (onDisconnect) { this.once('disconnect', onDisconnect); }
-  if (this.tcp) { this.tcp.socket.end(); }
-  if (this.udp) { this.udp.socket.close(); }
+  if (this.transport === 'tcp') {
+    if (onDisconnect) { this.tcp.socket.once('end', onDisconnect); }
+    this.tcp.socket.end()
+  }
 };
