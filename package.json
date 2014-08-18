@@ -1,6 +1,6 @@
 {
   "name": "riemannjs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pure JS client for Riemann, supports hybrid UDP/TCP connections.",
   "author": {
     "name": "James Butler",
