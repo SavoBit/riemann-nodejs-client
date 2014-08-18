@@ -7,14 +7,15 @@
     "email": "james.butler@sandfox.co.uk"
   },
   "contributors": [
-  {
-    "name": "Derek Perez",
-    "email": "derek@derekperez.com"
-  },
-  {
-    "name": "Julien Boeuf",
-    "email": "julien@boeuf.org"
-  }],
+    {
+      "name": "Derek Perez",
+      "email": "derek@derekperez.com"
+    },
+    {
+      "name": "Julien Boeuf",
+      "email": "julien@boeuf.org"
+    }
+  ],
   "main": "riemann",
   "engines": {
     "node": "> 0.6.0"
@@ -32,7 +33,7 @@
   "homepage": "https://github.com/sandfox/riemann-nodejs-client",
   "bugs": "https://github.com/sandfox/riemann-nodejs-client/issues",
   "dependencies": {
-    "protobufjs": "^2.0.5"
+    "protobufjs": "^3.4.0"
   },
   "devDependencies": {
     "mocha": "*",
@@ -42,5 +43,5 @@
     "lint": "find . -name '*.js' -and -not -path './node_modules/*' | xargs ./node_modules/.bin/jshint --config ./.jshint",
     "test": "NODE_PATH=./ mocha --ui tdd --reporter list --timeout 2000 --slow 5000"
   },
-  "license" : "MIT"
+  "license": "MIT"
 }
