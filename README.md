@@ -1,5 +1,7 @@
 # [Riemann](https://aphyr.github.io/riemann/) Node.js Client (in pure JS)
 
+[![Build Status](https://travis-ci.org/sandfox/riemann-nodejs-client.svg?branch=master)](https://travis-ci.org/sandfox/riemann-nodejs-client)
+
 because you should be monitoring all of those [non-blocking buffet plates.](http://www.infinitelooper.com/?v=-sfZqL4Plxc&p=n#/242;267)
 
 Riemannjs uses [ProtoBuf.js](https://github.com/dcodeIO/ProtoBuf.js), so no native dependencies or complication required.
