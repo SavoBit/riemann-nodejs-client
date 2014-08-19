@@ -22,7 +22,7 @@ test("should connect to server with UDP", function(done) {
 
 var server_down;
 test("should fire error event when trying to connect via TCP", function(done) {
-  server_down = riemann.createClient({port: 66500, transport: 'tcp'});
+  server_down = riemann.createClient({port: 65436, transport: 'tcp'});
   server_down.on('error', function(e) {
     assert(e instanceof Error);
     done();

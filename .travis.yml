@@ -1,0 +1,16 @@
+language: node_js
+
+node_js:
+  - "0.10"
+  - "0.11"
+
+matrix:
+  allow_failures:
+    - node_js: "0.11"
+
+before_install:
+  - wget http://aphyr.com/riemann/riemann_0.2.6_all.deb
+  - sudo dpkg -i riemann_0.2.6_all.deb
+  - sudo service riemann start
+  # stop race condition with riemann not listening before tests start
+  - while ! echo exit | nc localhost 5555; do sleep 1; done
