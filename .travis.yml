@@ -1,0 +1,16 @@
+language: node_js
+
+node_js:
+  - 0.8
+  - 0.10
+  - 0.11
+
+matrix:
+  allow_failures:
+    - node_js: 0.8
+    - node_js: 0.11
+
+before_install:
+  - wget http://aphyr.com/riemann/riemann_0.2.6_all.deb
+  - sudo dpkg -i riemann.0.2.6.deb
+  - sudo service riemann start
